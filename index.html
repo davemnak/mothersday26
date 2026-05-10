@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>For Jill — Mother's Day</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f6efe2;
+    --paper-2: #efe6d3;
+    --paper-edge: #d9cfb8;
+    --ink: #2b2a26;
+    --ink-soft: #5a574e;
+    --forest: #3a4a3a;
+    --moss: #6c7a5a;
+    --terracotta: #b56a4a;
+    --gold: #a98445;
+    /* tweakables */
+    --letter-size: 16px;
+    --letter-leading: 1.5;
+    --letter-gap: 9px;
+    --letter-pad-y: 38px;
+    --letter-pad-x: 44px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background:
+      radial-gradient(1200px 700px at 30% 20%, #efe7d6 0%, #e6dcc6 55%, #d9cdb1 100%);
+    color: var(--ink);
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    perspective: 2400px;
+  }
+
+  /* tiny grain on the page */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background-image:
+      radial-gradient(rgba(80,60,30,.06) 1px, transparent 1px),
+      radial-gradient(rgba(80,60,30,.04) 1px, transparent 1px);
+    background-size: 3px 3px, 7px 7px;
+    background-position: 0 0, 1px 2px;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    opacity: .55;
+  }
+
+  .stage {
+    position: relative;
+    width: min(1100px, 96vw);
+    height: min(720px, 92vh);
+    display: grid;
+    place-items: center;
+  }
+
+  /* Hint */
+  .hint {
+    position: absolute;
+    top: 18px; left: 50%; transform: translateX(-50%);
+    font-family: 'Caveat', cursive;
+    font-size: 22px;
+    color: var(--ink-soft);
+    letter-spacing: .02em;
+    opacity: .85;
+    transition: opacity .5s ease;
+    user-select: none;
+  }
+  .opened .hint { opacity: 0; }
+
+  /* Card */
+  .card {
+    position: relative;
+    width: min(560px, 92vw);
+    height: min(700px, 88vh);
+    transform-style: preserve-3d;
+    transition: transform .9s cubic-bezier(.7,.05,.2,1), width .9s cubic-bezier(.7,.05,.2,1);
+    cursor: pointer;
+  }
+  .opened .card {
+    width: min(1040px, 96vw);
+    cursor: default;
+  }
+
+  .panel {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 50%;
+    background:
+      linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+    box-shadow:
+      0 30px 60px -25px rgba(50,40,20,.45),
+      0 8px 20px -12px rgba(50,40,20,.35);
+    overflow: hidden;
+  }
+
+  /* paper texture on panels */
+  .panel::after {
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+      repeating-linear-gradient(135deg, rgba(120,90,40,.04) 0 1px, transparent 1px 3px),
+      radial-gradient(circle at 20% 10%, rgba(255,255,255,.5), transparent 60%),
+      radial-gradient(circle at 80% 90%, rgba(120,90,40,.07), transparent 55%);
+    pointer-events: none;
+  }
+
+  /* The cover (right page when closed, swings to the left) */
+  .cover {
+    right: 0;
+    transform-origin: left center;
+    transform: rotateY(0deg);
+    transition: transform 1.1s cubic-bezier(.65,.02,.2,1);
+    transform-style: preserve-3d;
+    z-index: 5;
+    border-left: 1px solid var(--paper-edge);
+  }
+  .opened .cover {
+    transform: rotateY(-172deg);
+  }
+
+  /* The inside-left page revealed when card opens */
+  .inside-left {
+    left: 0;
+    opacity: 0;
+    transition: opacity .5s ease .55s;
+  }
+  .opened .inside-left { opacity: 1; }
+
+  /* The inside-right page (fixed) */
+  .inside-right {
+    right: 0;
+    opacity: 0;
+    transition: opacity .5s ease .55s;
+  }
+  .opened .inside-right { opacity: 1; }
+
+  /* Back of cover (visible while opening) */
+  .cover-back {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: rotateY(180deg);
+    background: linear-gradient(180deg, #f1e8d4, #e7dcc2);
+    padding: 48px;
+  }
+  .cover-back::before {
+    content: "";
+    position: absolute; inset: 24px;
+    border: 1px solid rgba(80,60,30,.18);
+  }
+
+  /* Single panel mode (card closed) - centers cover */
+  .card:not(.opened-card) .cover { left: auto; right: 0; width: 100%; }
+  .opened .cover { width: 50%; }
+
+  /* COVER FRONT */
+  .cover-front {
+    position: absolute; inset: 0;
+    padding: 56px 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    z-index: 2;
+  }
+
+  .frame {
+    position: absolute; inset: 22px;
+    border: 1px solid rgba(80,60,30,.22);
+    pointer-events: none;
+  }
+  .frame::before, .frame::after {
+    content: ""; position: absolute;
+    width: 14px; height: 14px;
+    border: 1px solid rgba(80,60,30,.35);
+  }
+  .frame::before { top: -7px; left: -7px; border-right: 0; border-bottom: 0; }
+  .frame::after  { bottom: -7px; right: -7px; border-left: 0; border-top: 0; }
+
+  .eyebrow {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: .42em;
+    text-transform: uppercase;
+    color: var(--moss);
+    margin-top: 10px;
+  }
+  .title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-style: italic;
+    font-size: clamp(54px, 9vw, 92px);
+    line-height: .95;
+    color: var(--forest);
+    margin: 0;
+  }
+  .title .amp {
+    font-style: italic;
+    color: var(--terracotta);
+    font-weight: 400;
+  }
+  .for {
+    font-family: 'Caveat', cursive;
+    font-size: clamp(28px, 4vw, 42px);
+    color: var(--ink);
+    margin-top: 6px;
+  }
+  .for em {
+    font-style: normal;
+    color: var(--terracotta);
+  }
+
+  .sprig {
+    width: 120px; height: auto; opacity: .85;
+    margin-top: 8px;
+  }
+
+  .open-btn {
+    margin-top: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    border: 1px solid rgba(80,60,30,.3);
+    padding: 10px 18px;
+    background: transparent;
+    cursor: pointer;
+    transition: background .25s, color .25s;
+  }
+  .open-btn:hover { background: var(--forest); color: var(--paper); border-color: var(--forest); }
+
+  /* INSIDE LEFT — photo */
+  .photo-wrap {
+    position: absolute; inset: 36px 28px 36px 36px;
+    background: var(--paper);
+    box-shadow: 0 12px 24px -16px rgba(50,40,20,.5);
+  }
+  .photo {
+    position: absolute; inset: 14px;
+    background: url('assets/jill-and-boys.jpeg') center/cover no-repeat;
+    filter: saturate(1.02) contrast(1.02);
+  }
+  .photo::after {
+    content: "";
+    position: absolute; inset: 0;
+    box-shadow: inset 0 0 60px rgba(40,30,10,.18);
+    pointer-events: none;
+  }
+  .caption {
+    position: absolute;
+    left: 36px; right: 28px; bottom: 8px;
+    text-align: center;
+    font-family: 'Caveat', cursive;
+    font-size: 22px;
+    color: var(--ink-soft);
+  }
+  .tape {
+    position: absolute;
+    width: 90px; height: 22px;
+    background: rgba(220,200,150,.55);
+    border-left: 1px dashed rgba(255,255,255,.6);
+    border-right: 1px dashed rgba(255,255,255,.6);
+    box-shadow: 0 2px 4px rgba(0,0,0,.08);
+  }
+  .tape.tl { top: -10px; left: 24px; transform: rotate(-6deg); }
+  .tape.tr { top: -10px; right: 24px; transform: rotate(7deg); }
+
+  /* INSIDE RIGHT — letter */
+  .letter {
+    position: absolute;
+    top: var(--letter-pad-y); bottom: var(--letter-pad-y);
+    left: var(--letter-pad-x); right: var(--letter-pad-x);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .letter h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-style: italic;
+    font-size: clamp(26px, 3.4vw, 34px);
+    color: var(--forest);
+    margin: 0 0 2px;
+    letter-spacing: -.01em;
+    line-height: 1;
+  }
+  .letter .date {
+    font-family: 'Inter', sans-serif;
+    font-size: 10.5px;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: var(--moss);
+    margin-bottom: 14px;
+  }
+  .rule {
+    width: 48px; height: 1px;
+    background: var(--gold);
+    margin: 0 0 14px;
+  }
+  .letter p {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: var(--letter-size);
+    line-height: var(--letter-leading);
+    color: var(--ink);
+    margin: 0 0 var(--letter-gap);
+    text-wrap: pretty;
+  }
+  .letter p em {
+    color: var(--terracotta);
+    font-style: italic;
+  }
+  .signoff {
+    margin-top: auto;
+    padding-top: 10px;
+    font-family: 'Caveat', cursive;
+    font-size: 26px;
+    color: var(--ink);
+    line-height: 1.05;
+  }
+  .signoff small {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--moss);
+    margin-top: 6px;
+  }
+
+  /* Spine shadow when open */
+  .spine {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 50%;
+    width: 30px;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, transparent 0%, rgba(60,40,10,.18) 50%, transparent 100%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .5s ease .5s;
+    z-index: 6;
+  }
+  .opened .spine { opacity: 1; }
+
+  /* Floating hearts */
+  .hearts { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .heart {
+    position: absolute; bottom: -20px;
+    width: 14px; height: 14px;
+    color: var(--terracotta);
+    opacity: 0;
+    animation: rise 6s linear forwards;
+  }
+  @keyframes rise {
+    0%   { transform: translateY(0) rotate(0); opacity: 0; }
+    10%  { opacity: .8; }
+    100% { transform: translateY(-90vh) translateX(var(--drift, 30px)) rotate(40deg); opacity: 0; }
+  }
+
+  /* Reset hint */
+  .reset {
+    position: absolute;
+    bottom: 14px; left: 50%; transform: translateX(-50%);
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    background: transparent;
+    border: 1px solid rgba(80,60,30,.2);
+    padding: 8px 14px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .4s ease 1s;
+  }
+  .opened .reset { opacity: .8; }
+  .reset:hover { opacity: 1; background: rgba(255,255,255,.4); }
+
+  @media (max-width: 720px) {
+    :root {
+      --letter-size: 13.5px;
+      --letter-leading: 1.45;
+      --letter-gap: 7px;
+      --letter-pad-y: 24px;
+      --letter-pad-x: 22px;
+    }
+    .card { height: 80vh; }
+    .opened .card { width: 96vw; }
+    .letter h2 { font-size: 24px; }
+    .signoff { font-size: 22px; }
+    .photo-wrap { inset: 22px 14px 22px 22px; }
+    .title { font-size: 56px; }
+  }
+
+  /* ==== Tweaks panel ==== */
+  .tweaks-panel {
+    position: fixed;
+    right: 18px; top: 18px;
+    width: 270px;
+    background: rgba(255, 252, 244, .96);
+    border: 1px solid rgba(80,60,30,.18);
+    box-shadow: 0 14px 40px -18px rgba(40,30,10,.4);
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+    z-index: 100;
+    display: none;
+    backdrop-filter: blur(6px);
+  }
+  .tweaks-panel.open { display: block; }
+  .tweaks-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(80,60,30,.12);
+    cursor: grab;
+    user-select: none;
+  }
+  .tweaks-head h3 {
+    margin: 0; font-size: 11px; letter-spacing: .3em; text-transform: uppercase;
+    color: var(--moss); font-weight: 500;
+  }
+  .tweaks-head button {
+    background: none; border: 0; cursor: pointer; color: var(--ink-soft); font-size: 18px;
+    line-height: 1; padding: 0; width: 22px; height: 22px;
+  }
+  .tweaks-body { padding: 14px 14px 18px; max-height: 70vh; overflow-y: auto; }
+  .tweak {
+    display: flex; flex-direction: column; gap: 6px;
+    margin-bottom: 14px;
+  }
+  .tweak label {
+    font-size: 10px; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .tweak input[type=range] {
+    width: 100%; accent-color: var(--terracotta);
+  }
+  .tweak input[type=text] {
+    width: 100%; padding: 7px 9px; font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; border: 1px solid rgba(80,60,30,.22); background: rgba(255,255,255,.6);
+    color: var(--ink); border-radius: 0;
+  }
+  .tweak input[type=text]:focus { outline: 1px solid var(--moss); }
+  .tweak .seg {
+    display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+    border: 1px solid rgba(80,60,30,.2);
+  }
+  .tweak .seg button {
+    background: transparent; border: 0; padding: 7px 4px;
+    font-family: 'Inter', sans-serif; font-size: 10px;
+    letter-spacing: .15em; text-transform: uppercase;
+    color: var(--ink-soft); cursor: pointer;
+    border-right: 1px solid rgba(80,60,30,.12);
+  }
+  .tweak .seg button:last-child { border-right: 0; }
+  .tweak .seg button.on {
+    background: var(--forest); color: var(--paper);
+  }
+  .tweak .swatches { display: flex; gap: 8px; }
+  .tweak .swatches button {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid transparent; cursor: pointer;
+    box-shadow: 0 0 0 1px rgba(80,60,30,.2);
+  }
+  .tweak .swatches button.on { border-color: var(--ink); }
+  .tweak.row { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
+  .tweak.row label { flex: 1; }
+  .tweak.row .toggle {
+    width: 36px; height: 20px; border-radius: 999px;
+    background: rgba(80,60,30,.2); border: 0; cursor: pointer; position: relative;
+    transition: background .2s;
+  }
+  .tweak.row .toggle::after {
+    content: ""; position: absolute; top: 2px; left: 2px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: white; transition: transform .2s;
+  }
+  .tweak.row .toggle.on { background: var(--forest); }
+  .tweak.row .toggle.on::after { transform: translateX(16px); }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <div class="hint" id="hint">tap the card to open ✿</div>
+
+  <div class="card" id="card" onclick="openCard()">
+
+    <!-- Inside left (photo) -->
+    <div class="panel inside-left">
+      <div class="photo-wrap">
+        <span class="tape tl"></span>
+        <span class="tape tr"></span>
+        <div class="photo" role="img" aria-label="Jill with the boys by the river"></div>
+      </div>
+      <div class="caption">Sharing the Adventure #MomLife</div>
+    </div>
+
+    <!-- Inside right (letter) -->
+    <div class="panel inside-right">
+      <div class="letter">
+        <h2>For Jill,</h2>
+        <div class="date">
+
+MOTHER'S DAY · MAY 10, 2026</div>
+        <div class="rule"></div>
+
+        <p>Whatever shape our family takes from here, one thing is certain and unshaken: <em>you are an extraordinary mother.</em></p>
+
+        <p>I see it in the way the boys lean into you — the easy trust, the goofy laughs, the small hand reaching for yours without thinking. That is your work. That is years of patience, of late nights, of showing up again and again on the days nobody was watching.</p>
+
+        <p>This photo lives somewhere in my chest. The natural and manmade beauty, that smile of yours, two  boys wrapped in your arms like you are the safest place on earth — because to them, you are.</p>
+
+        <p>Thank you for the family we made. I will always be grateful for it, and for you.</p>
+
+        <div class="signoff">With love &amp; respect, always — Dave
+
+
+
+</div>
+      </div>
+    </div>
+
+    <!-- Front cover -->
+    <div class="panel cover">
+      <div class="cover-front">
+        <div class="frame"></div>
+        <div class="eyebrow">Mother's Day · 2026</div>
+
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+          <h1 class="title">For the<br><span class="amp">mother</span><br>of our boys</h1>
+          <svg class="sprig" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M10 30 Q 100 10 190 30" stroke="#6c7a5a" stroke-width="1.2" fill="none"/>
+            <g fill="#6c7a5a">
+              <ellipse cx="40" cy="22" rx="6" ry="2.5" transform="rotate(-20 40 22)"/>
+              <ellipse cx="60" cy="18" rx="7" ry="2.5" transform="rotate(-15 60 18)"/>
+              <ellipse cx="82" cy="15" rx="7" ry="2.5" transform="rotate(-8 82 15)"/>
+              <ellipse cx="105" cy="14" rx="7" ry="2.5" transform="rotate(2 105 14)"/>
+              <ellipse cx="128" cy="15" rx="7" ry="2.5" transform="rotate(10 128 15)"/>
+              <ellipse cx="150" cy="18" rx="7" ry="2.5" transform="rotate(16 150 18)"/>
+              <ellipse cx="170" cy="23" rx="6" ry="2.5" transform="rotate(22 170 23)"/>
+              <circle cx="100" cy="20" r="2.6" fill="#b56a4a"/>
+            </g>
+          </svg>
+          <div class="for">for <em>Jill</em></div>
+        </div>
+
+        <button class="open-btn" type="button">Open the card</button>
+      </div>
+
+      <div class="cover-back" aria-hidden="true">
+        <div style="font-family:'Caveat',cursive;font-size:24px;color:#6c7a5a;text-align:center;">
+          ✿
+        </div>
+      </div>
+    </div>
+
+    <div class="spine"></div>
+  </div>
+
+  <button class="reset" type="button" onclick="closeCard(event)">Close card</button>
+  <div class="hearts" id="hearts"></div>
+</div>
+
+<!-- Tweaks panel -->
+<div class="tweaks-panel" id="tweaksPanel" aria-hidden="true">
+  <div class="tweaks-head" id="tweaksHead">
+    <h3>Tweaks</h3>
+    <button type="button" id="tweaksClose" aria-label="Close">×</button>
+  </div>
+  <div class="tweaks-body">
+    <div class="tweak">
+      <label>Letter density</label>
+      <div class="seg" data-key="density">
+        <button data-val="compact">Compact</button>
+        <button data-val="cozy">Cozy</button>
+        <button data-val="airy">Airy</button>
+      </div>
+    </div>
+
+    <div class="tweak">
+      <label>Letter font size <span id="sizeLbl">16</span>px</label>
+      <input type="range" id="sizeRange" min="13" max="19" step="0.5" />
+    </div>
+
+    <div class="tweak">
+      <label>Paper tone</label>
+      <div class="swatches" data-key="tone">
+        <button data-val="cream" style="background:#f6efe2" title="Cream"></button>
+        <button data-val="sage" style="background:#e8ebde" title="Sage"></button>
+        <button data-val="dusk" style="background:#ece4dc" title="Dusk"></button>
+        <button data-val="linen" style="background:#f1ebe1" title="Linen"></button>
+      </div>
+    </div>
+
+    <div class="tweak">
+      <label>Accent</label>
+      <div class="swatches" data-key="accent">
+        <button data-val="terracotta" style="background:#b56a4a"></button>
+        <button data-val="forest" style="background:#3a4a3a"></button>
+        <button data-val="mauve" style="background:#9c6e7e"></button>
+        <button data-val="navy" style="background:#3a4a6a"></button>
+      </div>
+    </div>
+
+    <div class="tweak">
+      <label>Caption</label>
+      <input type="text" id="captionInput" />
+    </div>
+
+    <div class="tweak row">
+      <label>Floating hearts</label>
+      <button class="toggle" id="heartsToggle" type="button" aria-pressed="false"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "density": "cozy",
+    "size": 16,
+    "tone": "cream",
+    "accent": "terracotta",
+    "caption": "Sharing the Adventure #MomLife",
+    "hearts": true
+  }/*EDITMODE-END*/;
+
+  const stage = document.getElementById('stage');
+  const card = document.getElementById('card');
+  let isOpen = false;
+
+  function openCard() {
+    if (isOpen) return;
+    isOpen = true;
+    stage.classList.add('opened');
+    burstHearts(14);
+  }
+
+  function closeCard(e) {
+    e.stopPropagation();
+    isOpen = false;
+    stage.classList.remove('opened');
+  }
+
+  // floating hearts
+  function burstHearts(n) {
+    const host = document.getElementById('hearts');
+    for (let i = 0; i < n; i++) {
+      setTimeout(() => {
+        const h = document.createElement('div');
+        h.className = 'heart';
+        h.style.left = (10 + Math.random() * 80) + '%';
+        h.style.setProperty('--drift', (Math.random() * 80 - 40) + 'px');
+        h.style.animationDuration = (5 + Math.random() * 3) + 's';
+        h.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.4C1 8 3.4 4.5 7 4.5c2 0 3.6 1 5 2.7 1.4-1.7 3-2.7 5-2.7 3.6 0 6 3.5 4.6 7.1C19.5 16.4 12 21 12 21z"/></svg>';
+        host.appendChild(h);
+        setTimeout(() => h.remove(), 7500);
+      }, i * 220);
+    }
+  }
+
+  // recurring hearts after open
+  setInterval(() => { if (isOpen && tweaks.hearts) burstHearts(2); }, 2400);
+
+  // also let the open button work
+  document.querySelector('.open-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    openCard();
+  });
+
+  /* ============ Tweaks ============ */
+  const tweaks = { ...TWEAK_DEFAULTS };
+  const root = document.documentElement;
+  const TONES = {
+    cream:  { paper: '#f6efe2', paper2: '#efe6d3', edge: '#d9cfb8' },
+    sage:   { paper: '#e8ebde', paper2: '#dee2cf', edge: '#c5cab2' },
+    dusk:   { paper: '#ece4dc', paper2: '#e1d8cc', edge: '#cabfb1' },
+    linen:  { paper: '#f1ebe1', paper2: '#e8e0d2', edge: '#d2c8b6' },
+  };
+  const ACCENTS = {
+    terracotta: '#b56a4a',
+    forest:     '#3a4a3a',
+    mauve:      '#9c6e7e',
+    navy:       '#3a4a6a',
+  };
+  const DENSITIES = {
+    compact: { leading: 1.4,  gap: 6,  padY: 30, padX: 36 },
+    cozy:    { leading: 1.5,  gap: 9,  padY: 38, padX: 44 },
+    airy:    { leading: 1.65, gap: 13, padY: 48, padX: 52 },
+  };
+
+  function applyTweaks() {
+    const t = TONES[tweaks.tone] || TONES.cream;
+    root.style.setProperty('--paper', t.paper);
+    root.style.setProperty('--paper-2', t.paper2);
+    root.style.setProperty('--paper-edge', t.edge);
+    root.style.setProperty('--terracotta', ACCENTS[tweaks.accent] || ACCENTS.terracotta);
+    const d = DENSITIES[tweaks.density] || DENSITIES.cozy;
+    root.style.setProperty('--letter-leading', d.leading);
+    root.style.setProperty('--letter-gap', d.gap + 'px');
+    root.style.setProperty('--letter-pad-y', d.padY + 'px');
+    root.style.setProperty('--letter-pad-x', d.padX + 'px');
+    root.style.setProperty('--letter-size', tweaks.size + 'px');
+    document.querySelector('.caption').textContent = tweaks.caption;
+    // sync UI
+    syncControls();
+  }
+
+  function syncControls() {
+    document.querySelectorAll('.seg').forEach(seg => {
+      const key = seg.dataset.key;
+      seg.querySelectorAll('button').forEach(b => {
+        b.classList.toggle('on', b.dataset.val === tweaks[key]);
+      });
+    });
+    document.querySelectorAll('.swatches').forEach(sw => {
+      const key = sw.dataset.key;
+      sw.querySelectorAll('button').forEach(b => {
+        b.classList.toggle('on', b.dataset.val === tweaks[key]);
+      });
+    });
+    document.getElementById('sizeRange').value = tweaks.size;
+    document.getElementById('sizeLbl').textContent = tweaks.size;
+    const cap = document.getElementById('captionInput');
+    if (document.activeElement !== cap) cap.value = tweaks.caption;
+    document.getElementById('heartsToggle').classList.toggle('on', !!tweaks.hearts);
+  }
+
+  function setTweak(key, val) {
+    tweaks[key] = val;
+    applyTweaks();
+    try {
+      window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [key]: val } }, '*');
+    } catch (e) {}
+  }
+
+  // wire up controls
+  document.querySelectorAll('.seg').forEach(seg => {
+    seg.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      setTweak(seg.dataset.key, b.dataset.val);
+    });
+  });
+  document.querySelectorAll('.swatches').forEach(sw => {
+    sw.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      setTweak(sw.dataset.key, b.dataset.val);
+    });
+  });
+  document.getElementById('sizeRange').addEventListener('input', e => {
+    setTweak('size', parseFloat(e.target.value));
+  });
+  document.getElementById('captionInput').addEventListener('input', e => {
+    setTweak('caption', e.target.value);
+  });
+  document.getElementById('heartsToggle').addEventListener('click', () => {
+    setTweak('hearts', !tweaks.hearts);
+  });
+
+  // panel open/close + parent protocol
+  const panel = document.getElementById('tweaksPanel');
+  function openPanel() { panel.classList.add('open'); panel.setAttribute('aria-hidden','false'); }
+  function closePanel() {
+    panel.classList.remove('open'); panel.setAttribute('aria-hidden','true');
+    try { window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); } catch (e) {}
+  }
+  document.getElementById('tweaksClose').addEventListener('click', closePanel);
+
+  window.addEventListener('message', (e) => {
+    const m = e.data || {};
+    if (m.type === '__activate_edit_mode') openPanel();
+    if (m.type === '__deactivate_edit_mode') closePanel();
+  });
+  try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch (e) {}
+
+  // drag panel
+  (function makeDraggable() {
+    const head = document.getElementById('tweaksHead');
+    let sx, sy, ox, oy, dragging = false;
+    head.addEventListener('mousedown', (e) => {
+      if (e.target.closest('button')) return;
+      dragging = true;
+      const r = panel.getBoundingClientRect();
+      sx = e.clientX; sy = e.clientY; ox = r.left; oy = r.top;
+      panel.style.right = 'auto';
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      panel.style.left = (ox + e.clientX - sx) + 'px';
+      panel.style.top  = (oy + e.clientY - sy) + 'px';
+    });
+    window.addEventListener('mouseup', () => { dragging = false; });
+  })();
+
+  applyTweaks();
+</script>
+
+</body>
+</html>

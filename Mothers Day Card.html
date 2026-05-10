@@ -390,18 +390,123 @@
 
   @media (max-width: 720px) {
     :root {
-      --letter-size: 13.5px;
-      --letter-leading: 1.45;
-      --letter-gap: 7px;
-      --letter-pad-y: 24px;
+      --letter-size: 14px;
+      --letter-leading: 1.5;
+      --letter-gap: 8px;
+      --letter-pad-y: 22px;
       --letter-pad-x: 22px;
     }
-    .card { height: 80vh; }
-    .opened .card { width: 96vw; }
-    .letter h2 { font-size: 24px; }
-    .signoff { font-size: 22px; }
-    .photo-wrap { inset: 22px 14px 22px 22px; }
-    .title { font-size: 56px; }
+    body { overflow: auto; align-items: flex-start; }
+    .stage {
+      width: 100vw;
+      height: auto;
+      min-height: 100vh;
+      padding: 24px 0 56px;
+    }
+    .hint { top: 8px; font-size: 18px; }
+
+    /* Card behaves as a column on phones */
+    .card {
+      width: min(420px, 92vw);
+      height: auto;
+      min-height: 0;
+      transform-style: flat;
+      perspective: none;
+    }
+    .opened .card {
+      width: min(420px, 92vw);
+    }
+
+    .panel {
+      position: relative;
+      top: auto; bottom: auto;
+      width: 100%;
+      box-shadow: 0 20px 40px -22px rgba(50,40,20,.45);
+    }
+
+    /* Cover: takes full card area when closed, collapses out when opened */
+    .cover {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 5/7;
+      transform: none;
+      transition: max-height .55s ease, opacity .35s ease, margin .55s ease, transform .55s ease;
+      max-height: 100vh;
+      transform-origin: top center;
+      border-left: 0;
+    }
+    .opened .cover {
+      transform: scaleY(.0) translateY(-20px);
+      opacity: 0;
+      max-height: 0;
+      margin-bottom: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .cover-back { display: none; }
+    .cover-front { padding: 36px 26px; gap: 14px; }
+    .frame { inset: 14px; }
+    .title { font-size: clamp(44px, 13vw, 64px) !important; }
+    .for { font-size: clamp(26px, 7vw, 34px); }
+    .sprig { width: 96px; }
+
+    /* Inside panels stack vertically */
+    .inside-left, .inside-right {
+      position: relative;
+      left: auto; right: auto;
+      width: 100%;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: max-height .6s ease .1s, opacity .4s ease .2s;
+    }
+    .opened .inside-left {
+      max-height: 120vw;
+      opacity: 1;
+    }
+    .opened .inside-right {
+      max-height: 1400px;
+      opacity: 1;
+      transition-delay: .25s, .35s;
+    }
+
+    /* Photo panel on mobile */
+    .inside-left { aspect-ratio: 5/6; }
+    .opened .inside-left { aspect-ratio: 5/6; }
+    .photo-wrap { inset: 18px; }
+    .caption { left: 18px; right: 18px; bottom: 6px; font-size: 18px; }
+
+    /* Letter panel on mobile */
+    .inside-right { padding: 4px 0; }
+    .letter {
+      position: relative;
+      inset: auto;
+      top: auto; left: auto; right: auto; bottom: auto;
+      padding: var(--letter-pad-y) var(--letter-pad-x);
+      overflow: visible;
+    }
+    .letter h2 { font-size: 28px; }
+    .letter .date { font-size: 9.5px; margin-bottom: 12px; }
+    .signoff { font-size: 22px; padding-top: 8px; }
+
+    /* Spine, hint, reset adjusted */
+    .spine { display: none; }
+    .reset {
+      position: relative;
+      bottom: auto;
+      transform: none;
+      margin: 18px auto 0;
+      display: block;
+    }
+    .opened .reset { opacity: .9; }
+
+    /* Tweaks panel — make it bottom-sheet style on phones */
+    .tweaks-panel {
+      right: 8px; left: 8px; top: auto; bottom: 8px;
+      width: auto;
+      max-height: 70vh;
+    }
+    .tweaks-body { max-height: 56vh; }
   }
 
   /* ==== Tweaks panel ==== */
